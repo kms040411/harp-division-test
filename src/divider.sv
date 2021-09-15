@@ -1,7 +1,7 @@
 module divider
     #(
         parameter DATA_LEN = 32,
-        parameter PIPELINE_STATE = 10;
+        parameter PIPELINE_STATE = 10
     )(
         input clk,
         input reset,

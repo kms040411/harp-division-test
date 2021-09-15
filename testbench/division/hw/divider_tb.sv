@@ -136,7 +136,7 @@ module app_afu(
             d_a <= {DATA_LEN{1'b0}};
             d_b <= {DATA_LEN{1'b0}};
 
-            cycle_wait <= PIPELINE_STATE + 1;
+            cycle_wait <= PIPELINE_STATE;
 
             state <= STATE_WAITING_INPUT;
         end else begin
@@ -153,7 +153,7 @@ module app_afu(
             end else if(state == STATE_IDLE) begin
                 fiu.c0Tx.valid <= 1'b0;
                 fiu.c1Tx.valid <= 1'b0;
-                cycle_wait <= PIPELINE_STATE + 1;
+                cycle_wait <= PIPELINE_STATE;
 
                 if(is_fn_written) begin
                     $display("AFU got start signal, send it to divider");
@@ -204,7 +204,7 @@ module app_afu(
                 d_a <= {DATA_LEN{1'b0}};
                 d_b <= {DATA_LEN{1'b0}};
 
-                cycle_wait <= PIPELINE_STATE + 1;
+                cycle_wait <= PIPELINE_STATE;
             end else begin
                 fiu.c0Tx.valid <= 1'b0;
                 fiu.c1Tx.valid <= 1'b0;
@@ -212,7 +212,7 @@ module app_afu(
                 d_a <= {DATA_LEN{1'b0}};
                 d_b <= {DATA_LEN{1'b0}};
 
-                cycle_wait <= PIPELINE_STATE + 1;
+                cycle_wait <= PIPELINE_STATE;
             end
         end
     end
