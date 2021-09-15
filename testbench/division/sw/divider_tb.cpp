@@ -69,7 +69,7 @@ int main(int argc, char **argv){
         fpga_int a = value_gen(gen);
         fpga_int b = value_gen(gen);
         init_buffer(input_buf, 2);
-        init_buffer(input_buf, 2);
+        init_buffer(output_buf, 2);
         
         input_buf[0] = a * b;
         input_buf[1] = a;
@@ -79,6 +79,8 @@ int main(int argc, char **argv){
 
         assert_test(1, b, output_buf[1]);
         printf("%d / %d == %d\n", a * b, a, output_buf[1]);
+
+        csrs.writeCSR(3, 1);
     }
 
 

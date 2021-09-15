@@ -65,12 +65,7 @@ module app_afu(
 
         STATE_REQUEST,
         STATE_OP,
-        STATE_WAIT1,
-        STATE_WAIT2,
-        STATE_WAIT3,
-        STATE_WAIT4,
-        STATE_WAIT5,
-        STATE_WAIT6,
+        STATE_WAIT,
         STATE_RESPONSE,
 
         STATE_RESET
@@ -108,6 +103,7 @@ module app_afu(
 
     // DUT
     localparam DATA_LEN = 32;
+    localparam PIPELINE_STATE = 10;
 
     logic d_reset;
     logic [DATA_LEN-1:0] d_a;
@@ -117,7 +113,8 @@ module app_afu(
     assign d_reset = (reset || (state == STATE_RESET));
 
     divider #(
-        .DATA_LEN(32)
+        .DATA_LEN(32),
+        .PIPELINE_STATE(10)
     ) divider_unit (
         .clk(clk),
         .reset(d_reset),
@@ -126,6 +123,7 @@ module app_afu(
         .result(d_result)
     );
 
+    int cycle_wait;
     // State Machine
     always_ff @(posedge clk) begin
         if(reset) begin
@@ -137,6 +135,8 @@ module app_afu(
 
             d_a <= {DATA_LEN{1'b0}};
             d_b <= {DATA_LEN{1'b0}};
+
+            cycle_wait <= PIPELINE_STATE + 1;
 
             state <= STATE_WAITING_INPUT;
         end else begin
@@ -153,6 +153,7 @@ module app_afu(
             end else if(state == STATE_IDLE) begin
                 fiu.c0Tx.valid <= 1'b0;
                 fiu.c1Tx.valid <= 1'b0;
+                cycle_wait <= PIPELINE_STATE + 1;
 
                 if(is_fn_written) begin
                     $display("AFU got start signal, send it to divider");
@@ -173,32 +174,22 @@ module app_afu(
                 fiu.c0Tx.valid <= 1'b0;
                 if(cci_c0Rx_isReadRsp(fiu.c0Rx)) begin
                     $display("AFU got two number a(%d), b(%d)", fiu.c0Rx.data[31:0], fiu.c0Rx.data[63:32]);
-                    state <= STATE_WAIT1;
+                    state <= STATE_WAIT;
 
                     d_a <= fiu.c0Rx.data[31:0];
                     d_b <= fiu.c0Rx.data[63:32];
                 end
-            end else if(state == STATE_WAIT1) begin
-                $display("Wait for 6 cycles (1/6)");
-                state <= STATE_WAIT2;
-
+            end else if(state == STATE_WAIT) begin
                 d_a <= {DATA_LEN{1'b0}};
                 d_b <= {DATA_LEN{1'b0}};
-            end else if(state == STATE_WAIT2) begin
-                $display("Wait for 6 cycles (2/56");
-                state <= STATE_WAIT3;
-            end else if(state == STATE_WAIT3) begin
-                $display("Wait for 6 cycles (3/6)");
-                state <= STATE_WAIT4;
-            end else if(state == STATE_WAIT4) begin
-                $display("Wait for 6 cycles (4/6)");
-                state <= STATE_WAIT5;
-            end else if(state == STATE_WAIT5) begin
-                $display("Wait for 6 cycles (5/6)");
-                state <= STATE_WAIT6;
-            end else if(state == STATE_WAIT6) begin
-                $display("Wait for 6 cycles (6/6)")
-                state <= STATE_RESPONSE;
+
+                if(cycle_wait == 0) begin
+                    $display("Stop waiting");
+                    state <= STATE_RESPONSE;
+                end else begin
+                    $display("Remain %d cycles", cycle_wait);
+                    cycle_wait <= cycle_wait - 1;
+                end 
             end else if(state == STATE_RESPONSE) begin
                 $display("AFU sent result (%d)", d_result);
                 state <= STATE_IDLE;
@@ -212,12 +203,16 @@ module app_afu(
 
                 d_a <= {DATA_LEN{1'b0}};
                 d_b <= {DATA_LEN{1'b0}};
+
+                cycle_wait <= PIPELINE_STATE + 1;
             end else begin
                 fiu.c0Tx.valid <= 1'b0;
                 fiu.c1Tx.valid <= 1'b0;
 
                 d_a <= {DATA_LEN{1'b0}};
                 d_b <= {DATA_LEN{1'b0}};
+
+                cycle_wait <= PIPELINE_STATE + 1;
             end
         end
     end

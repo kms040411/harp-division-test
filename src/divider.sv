@@ -1,6 +1,7 @@
 module divider
     #(
-        parameter DATA_LEN = 32
+        parameter DATA_LEN = 32,
+        parameter PIPELINE_STATE = 10;
     )(
         input clk,
         input reset,
@@ -22,7 +23,7 @@ module divider
         .lpm_widthd(DATA_LEN),
         .lpm_nrepresentation("SIGNED"),
         .lpm_drepresentation("SIGNED"),
-        .lpm_pipeline(5)
+        .lpm_pipeline(10)
     ) divider (
         .clock(clk),
         .clken(1'b1),
