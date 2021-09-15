@@ -103,7 +103,7 @@ module app_afu(
 
     // DUT
     localparam DATA_LEN = 32;
-    localparam PIPELINE_STATE = 10;
+    localparam PIPELINE_STAGE = 16;
 
     logic d_reset;
     logic [DATA_LEN-1:0] d_a;
@@ -114,7 +114,7 @@ module app_afu(
 
     divider #(
         .DATA_LEN(32),
-        .PIPELINE_STATE(10)
+        .PIPELINE_STAGE(10)
     ) divider_unit (
         .clk(clk),
         .reset(d_reset),
@@ -136,7 +136,7 @@ module app_afu(
             d_a <= {DATA_LEN{1'b0}};
             d_b <= {DATA_LEN{1'b0}};
 
-            cycle_wait <= PIPELINE_STATE;
+            cycle_wait <= PIPELINE_STAGE;
 
             state <= STATE_WAITING_INPUT;
         end else begin
@@ -153,7 +153,7 @@ module app_afu(
             end else if(state == STATE_IDLE) begin
                 fiu.c0Tx.valid <= 1'b0;
                 fiu.c1Tx.valid <= 1'b0;
-                cycle_wait <= PIPELINE_STATE;
+                cycle_wait <= PIPELINE_STAGE;
 
                 if(is_fn_written) begin
                     $display("AFU got start signal, send it to divider");
@@ -204,7 +204,7 @@ module app_afu(
                 d_a <= {DATA_LEN{1'b0}};
                 d_b <= {DATA_LEN{1'b0}};
 
-                cycle_wait <= PIPELINE_STATE;
+                cycle_wait <= PIPELINE_STAGE;
             end else begin
                 fiu.c0Tx.valid <= 1'b0;
                 fiu.c1Tx.valid <= 1'b0;
@@ -212,7 +212,7 @@ module app_afu(
                 d_a <= {DATA_LEN{1'b0}};
                 d_b <= {DATA_LEN{1'b0}};
 
-                cycle_wait <= PIPELINE_STATE;
+                cycle_wait <= PIPELINE_STAGE;
             end
         end
     end
