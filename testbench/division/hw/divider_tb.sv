@@ -113,8 +113,8 @@ module app_afu(
     assign d_reset = (reset || (state == STATE_RESET));
 
     divider #(
-        .DATA_LEN(32),
-        .PIPELINE_STAGE(10)
+        .DATA_LEN(DATA_LEN),
+        .PIPELINE_STAGE(PIPELINE_STAGE)
     ) divider_unit (
         .clk(clk),
         .reset(d_reset),
