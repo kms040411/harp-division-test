@@ -12,8 +12,8 @@ module divider
     );
 
     wire signed [DATA_LEN-1:0] input1, input2;
-    assign input1 = $signed(operand1);
-    assign input2 = $signed(operand2);
+    assign input1 = $signed(a);
+    assign input2 = $signed(b);
 
     wire [DATA_LEN-1:0] immDiv;
     lpm_divide #(

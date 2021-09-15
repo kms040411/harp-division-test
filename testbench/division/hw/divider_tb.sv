@@ -58,7 +58,7 @@ module app_afu(
     // =========================================================================
     //   Main AFU logic
     // =========================================================================
-    typedef enum logic [3:0] {
+    typedef enum logic [4:0] {
         STATE_WAITING_INPUT,
         STATE_WAITING_OUTPUT,
         STATE_IDLE,
@@ -70,6 +70,7 @@ module app_afu(
         STATE_WAIT3,
         STATE_WAIT4,
         STATE_WAIT5,
+        STATE_WAIT6,
         STATE_RESPONSE,
 
         STATE_RESET
@@ -178,22 +179,25 @@ module app_afu(
                     d_b <= fiu.c0Rx.data[63:32];
                 end
             end else if(state == STATE_WAIT1) begin
-                $display("Wait for 5 cycles (1/5)");
+                $display("Wait for 6 cycles (1/6)");
                 state <= STATE_WAIT2;
 
                 d_a <= {DATA_LEN{1'b0}};
                 d_b <= {DATA_LEN{1'b0}};
             end else if(state == STATE_WAIT2) begin
-                $display("Wait for 5 cycles (2/5)");
+                $display("Wait for 6 cycles (2/56");
                 state <= STATE_WAIT3;
             end else if(state == STATE_WAIT3) begin
-                $display("Wait for 5 cycles (3/5)");
+                $display("Wait for 6 cycles (3/6)");
                 state <= STATE_WAIT4;
             end else if(state == STATE_WAIT4) begin
-                $display("Wait for 5 cycles (4/5)");
+                $display("Wait for 6 cycles (4/6)");
                 state <= STATE_WAIT5;
             end else if(state == STATE_WAIT5) begin
-                $display("Wait for 5 cycles (5/5)");
+                $display("Wait for 6 cycles (5/6)");
+                state <= STATE_WAIT6;
+            end else if(state == STATE_WAIT6) begin
+                $display("Wait for 6 cycles (6/6)")
                 state <= STATE_RESPONSE;
             end else if(state == STATE_RESPONSE) begin
                 $display("AFU sent result (%d)", d_result);
