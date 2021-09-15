@@ -31,9 +31,9 @@ module divider
         .denom(input2),
         .quotient(immDiv),
         .remain()
-    )
+    );
 
-    reg [DTAA_LEN-1:0] result_out;
+    reg [DATA_LEN-1:0] result_out;
     always_ff @(posedge clk) begin
         if(reset) begin
             result_out <= {DATA_LEN{1'b0}};

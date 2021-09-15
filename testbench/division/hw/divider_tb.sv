@@ -106,6 +106,8 @@ module app_afu(
     end
 
     // DUT
+    localparam DATA_LEN = 32;
+
     logic d_reset;
     logic [DATA_LEN-1:0] d_a;
     logic [DATA_LEN-1:0] d_b;
@@ -194,7 +196,7 @@ module app_afu(
                 $display("Wait for 5 cycles (5/5)");
                 state <= STATE_RESPONSE;
             end else if(state == STATE_RESPONSE) begin
-                $display("AFU sent result (%d)" d_result);
+                $display("AFU sent result (%d)", d_result);
                 state <= STATE_IDLE;
 
                 fiu.c1Tx.valid <= 1'b1;
