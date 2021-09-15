@@ -23,7 +23,7 @@ module divider
         .lpm_widthd(DATA_LEN),
         .lpm_nrepresentation("SIGNED"),
         .lpm_drepresentation("SIGNED"),
-        .lpm_pipeline(10)
+        .lpm_pipeline(PIPELINE_STAGE)
     ) divider (
         .clock(clk),
         .clken(1'b1),
