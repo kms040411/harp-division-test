@@ -139,8 +139,13 @@ module app_afu(
             fiu.c0Tx.valid <= 1'b0;
             fiu.c1Tx.valid <= 1'b0;
         end else begin
-            fiu.c0Tx.valid <= (state == STATE_REQUEST) ? 1'b1 : 1'b0;
-            fiu.c1Tx.valid <= (state == STATE_RESPONSE) ? 1'b1 : 1'b0;
+            if(state) begin
+                fiu.c0Tx.valid <= (state == STATE_REQUEST) ? 1'b1 : 1'b0;
+                fiu.c1Tx.valid <= (state == STATE_RESPONSE) ? 1'b1 : 1'b0;
+            end else begin
+                fiu.c0Tx.valid <= 1'b0;
+                fiu.c1Tx.valid <= 1'b0;
+            end
         end
     end
     assign fiu.c0Tx.hdr = input_buffer_read_hdr;
