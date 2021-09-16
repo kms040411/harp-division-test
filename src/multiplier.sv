@@ -38,7 +38,7 @@ module multiplier
 
     reg [DATA_LEN-1:0] result_out;
     always_ff @(posedge clk) begin
-        $display("immMult: %d" immMult);
+        $display("%d %d immMult: %d", input1, input2, immMult);
         if(reset) begin
             result_out <= {DATA_LEN{1'b0}};
         end else begin
