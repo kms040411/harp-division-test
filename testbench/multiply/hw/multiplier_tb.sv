@@ -126,7 +126,7 @@ module app_afu(
         .DATA_LEN(DATA_LEN),
         .PIPELINE_STAGE(PIPELINE_STAGE)
     ) multiplier_unit (
-        .clk(clk),
+        .clk(clk_div2),
         .reset(d_reset),
         .a(d_a),
         .b(d_b),
@@ -134,14 +134,21 @@ module app_afu(
     );
 
     // State Machine
-    assign fiu.c0Tx.valid = (state == STATE_REQUEST);
-    assign fiu.c1Tx.valid = (state == STATE_RESPONSE);
+    always_ff @(posedge clk) begin
+        if(reset) begin
+            fiu.c0Tx.valid <= 1'b0;
+            fiu.c1Tx.valid <= 1'b0;
+        end else begin
+            fiu.c0Tx.valid <= (state == STATE_REQUEST);
+            fiu.c1Tx.valid <= (state == STATE_RESPONSE);
+        end
+    end
     assign fiu.c0Tx.hdr = input_buffer_read_hdr;
     assign fiu.c1Tx.hdr = output_buffer_write_hdr;
     assign fiu.c1Tx.data = t_ccip_clData'({448'b0, d_result, 32'b1});
     
     int cycle_wait;
-    always_ff @(posedge clk or posedge reset) begin
+    always_ff @(posedge clk_div2) begin
         if(reset) begin
             input_addr <= t_cci_clAddr'(0);
             output_addr <= t_cci_clAddr'(0);
