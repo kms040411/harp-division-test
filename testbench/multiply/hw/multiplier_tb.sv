@@ -132,13 +132,20 @@ module app_afu(
 
     int cycle_wait;
     // State Machine
+    always_ff @(posedge clk) begin
+        if(reset) begin
+            fiu.c0Tx.valid <= 1'b0;
+            fiu.c1Tx.valid <= 1'b0;
+        end else begin
+            fiu.c0Tx.valid <= (state == STATE_REQUEST);
+            fiu.c1Tx.valid <= (state == STATE_RESPONSE);
+        end
+    end
+
     always_ff @(posedge clk_div2) begin
         if(reset) begin
             input_addr <= t_cci_clAddr'(0);
             output_addr <= t_cci_clAddr'(0);
-
-            fiu.c0Tx.valid <= 1'b0;
-            fiu.c1Tx.valid <= 1'b0;
 
             d_a <= {DATA_LEN{1'b0}};
             d_b <= {DATA_LEN{1'b0}};
@@ -158,8 +165,6 @@ module app_afu(
 
                 output_addr <= byteAddrToClAddr(csrs.cpu_wr_csrs[2].data);
             end else if(state == STATE_IDLE) begin
-                fiu.c0Tx.valid <= 1'b0;
-                fiu.c1Tx.valid <= 1'b0;
                 cycle_wait <= PIPELINE_STAGE;
 
                 if(is_fn_written) begin
@@ -175,10 +180,8 @@ module app_afu(
                 $display("AFU sent input buffer read request");
                 state <= STATE_OP;
                 
-                fiu.c0Tx.valid <= 1'b1;
                 fiu.c0Tx.hdr <= input_buffer_read_hdr;
             end else if(state == STATE_OP) begin
-                fiu.c0Tx.valid <= 1'b0;
                 if(cci_c0Rx_isReadRsp(fiu.c0Rx)) begin
                     $display("AFU got two number a(%d), b(%d)", fiu.c0Rx.data[31:0], fiu.c0Rx.data[63:32]);
                     state <= STATE_WAIT;
@@ -189,7 +192,7 @@ module app_afu(
             end else if(state == STATE_WAIT) begin
                 d_a <= {DATA_LEN{1'b0}};
                 d_b <= {DATA_LEN{1'b0}};
-
+                
                 if(cycle_wait == 0) begin
                     $display("Stop waiting");
                     state <= STATE_RESPONSE;
@@ -201,7 +204,6 @@ module app_afu(
                 $display("AFU sent result (%d)", d_result);
                 state <= STATE_IDLE;
 
-                fiu.c1Tx.valid <= 1'b1;
                 fiu.c1Tx.hdr <= output_buffer_write_hdr;
                 fiu.c1Tx.data <= t_ccip_clData'({448'b0, d_result, 32'b1});
             end else if(state == STATE_RESET) begin
@@ -210,15 +212,10 @@ module app_afu(
 
                 d_a <= {DATA_LEN{1'b0}};
                 d_b <= {DATA_LEN{1'b0}};
-
                 cycle_wait <= PIPELINE_STAGE;
             end else begin
-                fiu.c0Tx.valid <= 1'b0;
-                fiu.c1Tx.valid <= 1'b0;
-
                 d_a <= {DATA_LEN{1'b0}};
                 d_b <= {DATA_LEN{1'b0}};
-
                 cycle_wait <= PIPELINE_STAGE;
             end
         end
