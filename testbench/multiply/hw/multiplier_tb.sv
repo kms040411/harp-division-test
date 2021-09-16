@@ -134,14 +134,30 @@ module app_afu(
     );
 
     // State Machine
+    logic [511:0] read_buffer;
+    logic buffer_ready
+    logic buffer_valid
     always_ff @(posedge clk) begin
         if(reset) begin
             fiu.c0Tx.valid <= 1'b0;
             fiu.c1Tx.valid <= 1'b0;
+
+            buffer_ready <= 1'b0;
+            buffer_valid <= 1'b0;
+            read_buffer <= {512{1'b0}};
         end else begin
-            if(state) begin
-                fiu.c0Tx.valid <= (state == STATE_REQUEST) ? 1'b1 : 1'b0;
-                fiu.c1Tx.valid <= (state == STATE_RESPONSE) ? 1'b1 : 1'b0;
+            if(state == STATE_REQUEST) begin
+                fiu.c0Tx.valid <= 1'b1;
+                buffer_ready <= 1'b1;
+            end else if(buffer_ready) begin
+                if(cci_c0Rx_isReadRsp(fiu.c0Rx)) begin
+                    read_buffer <= fiu.c0Rx.data;
+                    buffer_ready <= 1'b0;
+                    buffer_valid <= 1'b1;
+                end
+            end else if(state == STATE_RESPONSE) begin
+                buffer_valid <= 1'b0;
+                fiu.c1Tx.valid <= 1'b1;
             end else begin
                 fiu.c0Tx.valid <= 1'b0;
                 fiu.c1Tx.valid <= 1'b0;
@@ -191,12 +207,12 @@ module app_afu(
                 $display("AFU sent input buffer read request");
                 state <= STATE_OP;
             end else if(state == STATE_OP) begin
-                if(cci_c0Rx_isReadRsp(fiu.c0Rx)) begin
-                    $display("AFU got two number a(%d), b(%d)", fiu.c0Rx.data[31:0], fiu.c0Rx.data[63:32]);
+                if(buffer_valid) begin
+                    $display("AFU got two number a(%d), b(%d)", read_buffer[31:0], read_buffer[63:32]);
                     state <= STATE_WAIT;
 
-                    d_a <= fiu.c0Rx.data[31:0];
-                    d_b <= fiu.c0Rx.data[63:32];
+                    d_a <= read_buffer[31:0];
+                    d_b <= read_buffer[63:32];
                 end
             end else if(state == STATE_WAIT) begin
                 d_a <= {DATA_LEN{1'b0}};
