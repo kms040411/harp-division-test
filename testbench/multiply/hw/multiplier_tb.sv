@@ -23,7 +23,7 @@ module app_afu(
         if(reset) begin
             clk_div2 <= 1'b0;
         end else begin
-            clk_div2 <= ~clk;
+            clk_div2 <= ~clk_div2;
         end
     end
 
@@ -148,7 +148,7 @@ module app_afu(
     assign fiu.c1Tx.data = t_ccip_clData'({448'b0, d_result, 32'b1});
     
     int cycle_wait;
-    always_ff @(posedge clk) begin
+    always_ff @(posedge clk_div2) begin
         if(reset) begin
             input_addr <= t_cci_clAddr'(0);
             output_addr <= t_cci_clAddr'(0);
@@ -156,7 +156,7 @@ module app_afu(
             d_a <= {DATA_LEN{1'b0}};
             d_b <= {DATA_LEN{1'b0}};
 
-            cycle_wait <= PIPELINE_STAGE * 2 + 2;
+            cycle_wait <= PIPELINE_STAGE;
 
             state <= STATE_WAITING_INPUT;
         end else begin
@@ -171,7 +171,7 @@ module app_afu(
 
                 output_addr <= byteAddrToClAddr(csrs.cpu_wr_csrs[2].data);
             end else if(state == STATE_IDLE) begin
-                cycle_wait <= 10;//PIPELINE_STAGE * 2 + 2;
+                cycle_wait <= PIPELINE_STAGE;
 
                 if(is_fn_written) begin
                     $display("AFU got start signal, send it to divider");
@@ -214,11 +214,11 @@ module app_afu(
 
                 d_a <= {DATA_LEN{1'b0}};
                 d_b <= {DATA_LEN{1'b0}};
-                cycle_wait <= PIPELINE_STAGE * 2 + 2;
+                cycle_wait <= PIPELINE_STAGE;
             end else begin
                 d_a <= {DATA_LEN{1'b0}};
                 d_b <= {DATA_LEN{1'b0}};
-                cycle_wait <= PIPELINE_STAGE * 2 + 2;
+                cycle_wait <= PIPELINE_STAGE;
             end
         end
     end
