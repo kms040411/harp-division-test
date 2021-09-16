@@ -103,7 +103,7 @@ module app_afu(
 
     // DUT
     localparam DATA_LEN = 32;
-    localparam PIPELINE_STAGE = 2;
+    localparam PIPELINE_STAGE = 0;
 
     logic d_reset;
     logic [DATA_LEN-1:0] d_a;
