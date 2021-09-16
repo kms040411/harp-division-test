@@ -29,6 +29,7 @@ module multiplier
         .clock(clk),
         .clken(1'b1),
         .aclr(reset),
+        .sclr(reset),
         .dataa(input1),
         .datab(input2),
         .sum({DATA_LEN{1'b0}}),
@@ -37,6 +38,7 @@ module multiplier
 
     reg [DATA_LEN-1:0] result_out;
     always_ff @(posedge clk) begin
+        $display("immMult: %d" immMult);
         if(reset) begin
             result_out <= {DATA_LEN{1'b0}};
         end else begin
