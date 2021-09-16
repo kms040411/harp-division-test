@@ -5,4 +5,3 @@ C:../../../src/sources.txt
 
 +incdir+.
 multiplier_tb.sv
-clock_divider.sv

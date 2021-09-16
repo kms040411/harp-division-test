@@ -126,7 +126,7 @@ module app_afu(
         .DATA_LEN(DATA_LEN),
         .PIPELINE_STAGE(PIPELINE_STAGE)
     ) multiplier_unit (
-        .clk(clk_div2),
+        .clk(clk),
         .reset(d_reset),
         .a(d_a),
         .b(d_b),
@@ -138,7 +138,7 @@ module app_afu(
     assign fiu.c1Tx.valid = (state == STATE_RESPONSE);
 
     int cycle_wait;
-    always_ff @(posedge clk_div2 or posedge reset) begin
+    always_ff @(posedge clk or posedge reset) begin
         if(reset) begin
             input_addr <= t_cci_clAddr'(0);
             output_addr <= t_cci_clAddr'(0);
