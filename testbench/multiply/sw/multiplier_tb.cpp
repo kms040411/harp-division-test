@@ -73,11 +73,12 @@ int main(int argc, char **argv){
         
         input_buf[0] = a;
         input_buf[1] = b;
+        printf("%d * %d?\n", a, b);
 
         csrs.writeCSR(0, 1);
         while(output_buf[0] == 0) usleep(1);
 
-        assert_test(1, b, output_buf[1]);
+        assert_test(1, a * b, output_buf[1]);
         printf("%d * %d == %d\n", a, b, output_buf[1]);
 
         csrs.writeCSR(3, 1);
