@@ -136,7 +136,10 @@ module app_afu(
     // State Machine
     assign fiu.c0Tx.valid = (state == STATE_REQUEST);
     assign fiu.c1Tx.valid = (state == STATE_RESPONSE);
-
+    assign fiu.c0Tx.hdr = input_buffer_read_hdr;
+    assign fiu.c1Tx.hdr = output_buffer_write_hdr;
+    assign fiu.c1Tx.data = t_ccip_clData'({448'b0, d_result, 32'b1});
+    
     int cycle_wait;
     always_ff @(posedge clk or posedge reset) begin
         if(reset) begin
@@ -175,8 +178,6 @@ module app_afu(
             end else if(state == STATE_REQUEST) begin
                 $display("AFU sent input buffer read request");
                 state <= STATE_OP;
-                
-                fiu.c0Tx.hdr <= input_buffer_read_hdr;
             end else if(state == STATE_OP) begin
                 if(cci_c0Rx_isReadRsp(fiu.c0Rx)) begin
                     $display("AFU got two number a(%d), b(%d)", fiu.c0Rx.data[31:0], fiu.c0Rx.data[63:32]);
@@ -199,9 +200,6 @@ module app_afu(
             end else if(state == STATE_RESPONSE) begin
                 $display("AFU sent result (%d)", d_result);
                 state <= STATE_IDLE;
-
-                fiu.c1Tx.hdr <= output_buffer_write_hdr;
-                fiu.c1Tx.data <= t_ccip_clData'({448'b0, d_result, 32'b1});
             end else if(state == STATE_RESET) begin
                 $display("Reset divider");
                 state <= STATE_IDLE;
