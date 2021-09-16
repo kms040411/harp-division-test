@@ -16,13 +16,13 @@ module multiplier
     assign input1 = $signed(a);
     assign input2 = $signed(b);
 
-    wire [DATA_LEN-1:0] immMult;
+    /*wire [DATA_LEN-1:0] immMult;
     lpm_mult #(
         .lpm_type("lpm_mult"),
         .lpm_widtha(DATA_LEN),
         .lpm_widthb(DATA_LEN),
         .lpm_widthp(DATA_LEN),
-        .lpm_widths(DATA_LEN),
+        .lpm_widths(2 * DATA_LEN),
         .lpm_representation("SIGNED"),
         .lpm_pipeline(PIPELINE_STAGE)
     ) mult_unit (
@@ -34,7 +34,18 @@ module multiplier
         .datab(input2),
         .sum({DATA_LEN{1'b0}}),
         .result(immMult)
-    );
+    );*/
+    reg [DATA_LEN-1:0] mult_out;
+    reg [DATA_LEN-1:0] mult_out_q;
+    always_ff @(posedge clk) begin
+        if(reset) begin
+            mult_out <= {DATA_LEN{1'b0}};
+            mult_out_q <= {DATA_LEN{1'b0}};
+        end else begin
+            mult_out <= input1 * input2;
+            mult_out_q <= mult_out;
+        end
+    end
 
     reg [DATA_LEN-1:0] result_out;
     always_ff @(posedge clk) begin
@@ -42,7 +53,7 @@ module multiplier
         if(reset) begin
             result_out <= {DATA_LEN{1'b0}};
         end else begin
-            result_out <= immMult;
+            result_out <= mult_out_q;
         end
     end
 
