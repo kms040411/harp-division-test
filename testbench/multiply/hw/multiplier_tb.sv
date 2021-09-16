@@ -135,7 +135,6 @@ module app_afu(
 
     // State Machine
     always_ff @(posedge clk) begin
-        $display("%d %d %d", fiu.c0Tx.valid, fiu.c1Tx.valid, state);
         if(reset) begin
             fiu.c0Tx.valid <= 1'b0;
             fiu.c1Tx.valid <= 1'b0;
@@ -157,7 +156,7 @@ module app_afu(
             d_a <= {DATA_LEN{1'b0}};
             d_b <= {DATA_LEN{1'b0}};
 
-            cycle_wait <= PIPELINE_STAGE * 2 + 1;
+            cycle_wait <= PIPELINE_STAGE * 2 + 2;
 
             state <= STATE_WAITING_INPUT;
         end else begin
@@ -172,7 +171,7 @@ module app_afu(
 
                 output_addr <= byteAddrToClAddr(csrs.cpu_wr_csrs[2].data);
             end else if(state == STATE_IDLE) begin
-                cycle_wait <= PIPELINE_STAGE * 2 + 1;
+                cycle_wait <= PIPELINE_STAGE * 2 + 2;
 
                 if(is_fn_written) begin
                     $display("AFU got start signal, send it to divider");
@@ -214,11 +213,11 @@ module app_afu(
 
                 d_a <= {DATA_LEN{1'b0}};
                 d_b <= {DATA_LEN{1'b0}};
-                cycle_wait <= PIPELINE_STAGE * 2 + 1;
+                cycle_wait <= PIPELINE_STAGE * 2 + 2;
             end else begin
                 d_a <= {DATA_LEN{1'b0}};
                 d_b <= {DATA_LEN{1'b0}};
-                cycle_wait <= PIPELINE_STAGE * 2 + 1;
+                cycle_wait <= PIPELINE_STAGE * 2 + 2;
             end
         end
     end
