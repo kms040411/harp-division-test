@@ -135,12 +135,13 @@ module app_afu(
 
     // State Machine
     always_ff @(posedge clk) begin
+        $display("%d %d %d", fiu.c0Tx.valid, fiu.c1Tx.valid, state);
         if(reset) begin
             fiu.c0Tx.valid <= 1'b0;
             fiu.c1Tx.valid <= 1'b0;
         end else begin
-            fiu.c0Tx.valid <= (state == STATE_REQUEST);
-            fiu.c1Tx.valid <= (state == STATE_RESPONSE);
+            fiu.c0Tx.valid <= (state == STATE_REQUEST) ? 1'b1 : 1'b0;
+            fiu.c1Tx.valid <= (state == STATE_RESPONSE) ? 1'b1 : 1'b0;
         end
     end
     assign fiu.c0Tx.hdr = input_buffer_read_hdr;
@@ -148,7 +149,7 @@ module app_afu(
     assign fiu.c1Tx.data = t_ccip_clData'({448'b0, d_result, 32'b1});
     
     int cycle_wait;
-    always_ff @(posedge clk_div2) begin
+    always_ff @(posedge clk) begin
         if(reset) begin
             input_addr <= t_cci_clAddr'(0);
             output_addr <= t_cci_clAddr'(0);
@@ -156,7 +157,7 @@ module app_afu(
             d_a <= {DATA_LEN{1'b0}};
             d_b <= {DATA_LEN{1'b0}};
 
-            cycle_wait <= PIPELINE_STAGE;
+            cycle_wait <= PIPELINE_STAGE * 2 + 1;
 
             state <= STATE_WAITING_INPUT;
         end else begin
@@ -171,7 +172,7 @@ module app_afu(
 
                 output_addr <= byteAddrToClAddr(csrs.cpu_wr_csrs[2].data);
             end else if(state == STATE_IDLE) begin
-                cycle_wait <= PIPELINE_STAGE;
+                cycle_wait <= PIPELINE_STAGE * 2 + 1;
 
                 if(is_fn_written) begin
                     $display("AFU got start signal, send it to divider");
@@ -213,11 +214,11 @@ module app_afu(
 
                 d_a <= {DATA_LEN{1'b0}};
                 d_b <= {DATA_LEN{1'b0}};
-                cycle_wait <= PIPELINE_STAGE;
+                cycle_wait <= PIPELINE_STAGE * 2 + 1;
             end else begin
                 d_a <= {DATA_LEN{1'b0}};
                 d_b <= {DATA_LEN{1'b0}};
-                cycle_wait <= PIPELINE_STAGE;
+                cycle_wait <= PIPELINE_STAGE * 2 + 1;
             end
         end
     end
