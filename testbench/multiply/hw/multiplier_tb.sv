@@ -12,11 +12,12 @@ module app_afu(
 
     // Local reset to reduce fan-out
     logic reset = 1'b1;
-    always @(posedge clk)
+    always @(posedge clk2)
     begin
         reset <= fiu.reset;
     end
 
+    logic clk;
     clock_divider clk_divider(
         .clk(clk2),
         .reset(reset),

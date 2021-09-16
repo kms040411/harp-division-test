@@ -1,9 +1,9 @@
 module clock_divider
     (
-        input clk;
-        input reset;
+        input clk,
+        input reset,
 
-        output reg clk_div2;
+        output reg clk_div2
     );
 
     always @(posedge clk) begin
