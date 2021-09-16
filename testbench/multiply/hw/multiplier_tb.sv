@@ -130,18 +130,11 @@ module app_afu(
         .result(d_result)
     );
 
-    int cycle_wait;
     // State Machine
-    always_ff @(posedge clk) begin
-        if(reset) begin
-            fiu.c0Tx.valid <= 1'b0;
-            fiu.c1Tx.valid <= 1'b0;
-        end else begin
-            fiu.c0Tx.valid <= (state == STATE_REQUEST);
-            fiu.c1Tx.valid <= (state == STATE_RESPONSE);
-        end
-    end
+    assign fiu.c0Tx.valid = (state == STATE_REQUEST);
+    assign fiu.c1Tx.valid = (state == STATE_RESPONSE);
 
+    int cycle_wait;
     always_ff @(posedge clk_div2) begin
         if(reset) begin
             input_addr <= t_cci_clAddr'(0);
@@ -192,7 +185,7 @@ module app_afu(
             end else if(state == STATE_WAIT) begin
                 d_a <= {DATA_LEN{1'b0}};
                 d_b <= {DATA_LEN{1'b0}};
-                
+
                 if(cycle_wait == 0) begin
                     $display("Stop waiting");
                     state <= STATE_RESPONSE;
