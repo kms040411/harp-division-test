@@ -171,7 +171,7 @@ module app_afu(
 
                 output_addr <= byteAddrToClAddr(csrs.cpu_wr_csrs[2].data);
             end else if(state == STATE_IDLE) begin
-                cycle_wait <= PIPELINE_STAGE * 2 + 2;
+                cycle_wait <= 10;//PIPELINE_STAGE * 2 + 2;
 
                 if(is_fn_written) begin
                     $display("AFU got start signal, send it to divider");
@@ -196,6 +196,7 @@ module app_afu(
             end else if(state == STATE_WAIT) begin
                 d_a <= {DATA_LEN{1'b0}};
                 d_b <= {DATA_LEN{1'b0}};
+                $display("%d", d_result);
 
                 if(cycle_wait == 0) begin
                     $display("Stop waiting");
