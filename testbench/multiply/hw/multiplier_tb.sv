@@ -3,7 +3,7 @@
 `include "afu_json_info.vh"
 
 module app_afu(
-    input logic clk,
+    input logic clk2,
     cci_mpf_if.to_fiu fiu,      // Connection toward the host.
     app_csrs.app csrs,          // CSR connections
     input logic c0NotEmpty,     // MPF tracks outstanding requests. These will be true as long as
@@ -16,6 +16,12 @@ module app_afu(
     begin
         reset <= fiu.reset;
     end
+
+    clock_divider clk_divider(
+        .clk(clk2),
+        .reset(reset),
+        .clk_div2(clk)
+    );
 
     // =========================================================================
     //   Byte Address (CPU uses) <-> Line Address (FPGA uses)
