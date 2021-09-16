@@ -3,7 +3,7 @@
 `include "afu_json_info.vh"
 
 module app_afu(
-    input logic clk2,
+    input logic clk,
     cci_mpf_if.to_fiu fiu,      // Connection toward the host.
     app_csrs.app csrs,          // CSR connections
     input logic c0NotEmpty,     // MPF tracks outstanding requests. These will be true as long as
@@ -12,16 +12,16 @@ module app_afu(
 
     // Local reset to reduce fan-out
     logic reset = 1'b1;
-    always @(posedge clk2)
+    always @(posedge clk)
     begin
         reset <= fiu.reset;
     end
 
-    logic clk;
+    logic clk_div2;
     clock_divider clk_divider(
-        .clk(clk2),
+        .clk(clk),
         .reset(reset),
-        .clk_div2(clk)
+        .clk_div2(clk_div2)
     );
 
     // =========================================================================
@@ -123,7 +123,7 @@ module app_afu(
         .DATA_LEN(DATA_LEN),
         .PIPELINE_STAGE(PIPELINE_STAGE)
     ) multiplier_unit (
-        .clk(clk),
+        .clk(clk_div2),
         .reset(d_reset),
         .a(d_a),
         .b(d_b),
@@ -132,7 +132,7 @@ module app_afu(
 
     int cycle_wait;
     // State Machine
-    always_ff @(posedge clk) begin
+    always_ff @(posedge clk_div2) begin
         if(reset) begin
             input_addr <= t_cci_clAddr'(0);
             output_addr <= t_cci_clAddr'(0);
