@@ -145,9 +145,9 @@ module app_afu(
     );
 
     logic [511:0] read_buffer;
+    logic read_buffer_valid;
     logic [DATA_LEN-1:0] result_buffer;
-    logic clk_proceed;
-    logic clk_div2_proceed;
+    logic result_buffer_valid;
 
     // State Machine @ clk domain
     always_ff @(posedge clk) begin
@@ -156,7 +156,7 @@ module app_afu(
             fiu.c1Tx.valid <= 1'b0;
 
             read_buffer <= {512{1'b0}};
-            clk_proceed <= 1'b0;
+            read_buffer_valid <= 1'b0
 
             clk_state <= CLK_WAITING_INPUT;
         end else begin
@@ -173,7 +173,9 @@ module app_afu(
             end else if(clk_state == CLK_IDLE) begin
                 fiu.c0Tx.valid <= 1'b0;
                 fiu.c1Tx.valid <= 1'b0;
-                clk_proceed <= 1'b0;
+
+                read_buffer <= {512{1'b0}};
+                read_buffer_valid <= 1'b0;
 
                 if(is_fn_written) begin
                     $display("CLK: Got start signal, send it to divider");
@@ -197,17 +199,16 @@ module app_afu(
                     clk_state <= CLK_WAIT;
 
                     read_buffer <= fiu.c0Rx.data[511:0];
+                    read_buffer_valid <= 1'b1;
                 end
             end else if(clk_state == CLK_WAIT) begin
                 $display("CLK: Wait until CLK_DIV2 proceeds");
-                clk_proceed <= 1'b1;
-                if(clk_div2_proceed && clk_proceed) begin
+                if(result_buffer_valid == 1'b1) begin
                     clk_state <= CLK_RESPONSE;
                 end
             end else if(clk_state == CLK_RESPONSE) begin
                 $display("CLK: Send output buffer write request with result(%d)", result_buffer[DATA_LEN-1:0]);
                 clk_state <= CLK_IDLE;
-                clk_proceed <= 1'b0;
 
                 fiu.c1Tx.valid <= 1'b1;
                 fiu.c1Tx.hdr <= output_buffer_write_hdr;
@@ -217,13 +218,8 @@ module app_afu(
 
                 fiu.c0Tx.valid <= 1'b0;
                 fiu.c1Tx.valid <= 1'b0;
-                clk_proceed <= 1'b0;
                 read_buffer <= {512{1'b0}};
 
-                clk_proceed <= 1'b1;
-                if(clk_div2_proceed && clk_proceed) begin
-                    clk_state <= CLK_IDLE;
-                end
             end
         end
     end
@@ -232,11 +228,12 @@ module app_afu(
     always_ff @(posedge clk_div2) begin
         if(reset) begin
             clk_div2_state <= CLKDIV2_IDLE;
+
             result_buffer <= {DATA_LEN{1'b0}};
-            clk_div2_proceed <= 1'b0;
+            result_buffer_valid <= 1'b0;
         end else begin
             if(clk_div2_state == CLKDIV2_IDLE) begin
-                if(clk_state == CLK_WAIT) begin
+                if(result_buffer_valid == 1'b1) begin
                     clk_div2_state <= CLKDIV2_OP;
                 end else if(clk_state == CLK_RESET) begin
                     clk_div2_state <= CLKDIV2_RESET;
@@ -245,6 +242,8 @@ module app_afu(
                 $display("CLKDIV2: Read the buffer with a(%d), b(%d)", read_buffer[0+:DATA_LEN], read_buffer[DATA_LEN+:DATA_LEN]);
                 clk_div2_state <= CLKDIV2_WAIT;
 
+                result_buffer_valid <= 1'b0;
+
                 d_a <= read_buffer[0+:DATA_LEN];
                 d_b <= read_buffer[DATA_LEN+:DATA_LEN];
             end else if(clk_div2_state == CLKDIV2_WAIT) begin
@@ -252,21 +251,17 @@ module app_afu(
                 clk_div2_state <= CLKDIV2_RESULT;
 
             end else if(clk_div2_state == CLKDIV2_RESULT) begin
-                $display("CLKDIV2: Operation done with result(%d; %d)", d_result, result_buffer);
-                clk_div2_proceed <= 1'b1;
-                if(clk_div2_proceed && clk_proceed) begin
-                    clk_div2_state <= CLKDIV2_IDLE;
-                end
+                $display("CLKDIV2: Operation done with result(%d)", d_result;
+                clk_div2_state <= CLKDIV2_IDLE;
 
                 d_a <= {DATA_LEN{1'b0}};
                 d_b <= {DATA_LEN{1'b0}};
-                if(result_buffer == {DATA_LEN{1'b0}}) begin
-                    result_buffer <= d_result;
-                end
+
+                result_buffer <= d_result;
+                result_buffer_valid <= 1'b1;
             end else if(clk_div2_state == CLKDIV2_RESET) begin
                 $display("CLKDIV2: Got reset signal");
                 clk_div2_state <= CLKDIV2_IDLE;
-                clk_div2_proceed <= 1'b0;
 
                 result_buffer <= {DATA_LEN{1'b0}};
             end
