@@ -150,8 +150,8 @@ module app_afu(
     // State Machine @ clk domain
     always_ff @(posedge clk) begin
         if(reset) begin
-            fiu.c0Rx.valid <= 1'b0;
-            fiu.c1Rx.valid <= 1'b0;
+            fiu.c0Tx.valid <= 1'b0;
+            fiu.c1Tx.valid <= 1'b0;
 
             read_buffer <= {512{1'b0}};
 
@@ -209,8 +209,8 @@ module app_afu(
             end else if(clk_state == CLK_RESET) begin
                 $display("CLK: Got reset signal, wait for synchronizing with CLKDIV2");
 
-                fiu.c0Rx.valid <= 1'b0;
-                fiu.c1Rx.valid <= 1'b0;
+                fiu.c0Tx.valid <= 1'b0;
+                fiu.c1Tx.valid <= 1'b0;
                 read_buffer <= {512{1'b0}};
 
                 if(clk_div2_state == CLKDIV2_RESET) begin
