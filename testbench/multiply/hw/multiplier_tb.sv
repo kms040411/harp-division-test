@@ -68,6 +68,31 @@ module app_afu(
     // =========================================================================
     //   Main AFU logic
     // =========================================================================
+    typedef enum logic [4:0] {
+        CLK_WAITING_INPUT,
+        CLK_WAITING_OUTPUT,
+        CLK_IDLE,
+
+        CLK_REQUEST,
+        CLK_REQUEST_FILL_BUF,
+        CLK_WAIT,
+        CLK_RESPONSE,
+
+        CLK_RESET
+    } clk_state;
+    clk_state clk_state;
+
+    typedef enum logic [4:0] {
+        CLKDIV2_IDLE,
+
+        CLKDIV2_OP,
+        CLKDIV2_WAIT,
+        CLKDIV2_RESULT,
+
+        CLKDIV2_RESET
+    } clk_div2_state;
+    clk_div2_state clk_div2_state;
+    
     t_ccip_clAddr input_addr;
     t_ccip_clAddr output_addr;
 
@@ -118,31 +143,6 @@ module app_afu(
         .b(d_b),
         .result(d_result)
     );
-
-    typedef enum logic [4:0] {
-        CLK_WAITING_INPUT,
-        CLK_WAITING_OUTPUT,
-        CLK_IDLE,
-
-        CLK_REQUEST,
-        CLK_REQUEST_FILL_BUF,
-        CLK_WAIT,
-        CLK_RESPONSE,
-
-        CLK_RESET
-    } clk_state;
-    clk_state clk_state;
-
-    typedef enum logic [4:0] {
-        CLKDIV2_IDLE,
-
-        CLKDIV2_OP,
-        CLKDIV2_WAIT,
-        CLKDIV2_RESULT,
-
-        CLKDIV2_RESET
-    } clk_div2_state;
-    clk_div2_state clk_div2_state;
 
     logic [511:0] read_buffer;
     logic [DATA_LEN-1:0] result_buffer;
