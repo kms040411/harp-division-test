@@ -79,8 +79,8 @@ module app_afu(
         CLK_RESPONSE,
 
         CLK_RESET
-    } clk_state;
-    clk_state clk_state;
+    } _clk_state;
+    _clk_state clk_state;
 
     typedef enum logic [4:0] {
         CLKDIV2_IDLE,
@@ -90,9 +90,9 @@ module app_afu(
         CLKDIV2_RESULT,
 
         CLKDIV2_RESET
-    } clk_div2_state;
-    clk_div2_state clk_div2_state;
-    
+    } _clk_div2_state;
+    _clk_div2_state clk_div2_state;
+
     t_ccip_clAddr input_addr;
     t_ccip_clAddr output_addr;
 
@@ -159,12 +159,12 @@ module app_afu(
         end else begin
             if((clk_state == CLK_WAITING_INPUT) && is_input_buf_written) begin
                 $display("CLK: Read input buffer address");
-                state <= CLK_WAITING_OUTPUT;
+                clk_state <= CLK_WAITING_OUTPUT;
 
                 input_addr <= byteAddrToClAddr(csrs.cpu_wr_csrs[1].data);
             end else if((clk_state == CLK_WAITING_OUTPUT) && is_output_buf_written) begin
                 $display("CLK: Read output buffer address");
-                state <= CLK_IDLE;
+                clk_state <= CLK_IDLE;
 
                 output_addr <= byteAddrToClAddr(csrs.cpu_wr_csrs[2].data);
             end else if(clk_state == CLK_IDLE) begin
