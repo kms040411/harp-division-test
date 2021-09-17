@@ -119,7 +119,6 @@ module app_afu(
         .result(d_result)
     );
 
-    // State Machine @ clk domain
     typedef enum logic [4:0] {
         CLK_WAITING_INPUT,
         CLK_WAITING_OUTPUT,
@@ -134,8 +133,21 @@ module app_afu(
     } clk_state;
     clk_state clk_state;
 
-    logic [511:0] read_buffer;
+    typedef enum logic [4:0] {
+        CLKDIV2_IDLE,
 
+        CLKDIV2_OP,
+        CLKDIV2_WAIT,
+        CLKDIV2_RESULT,
+
+        CLKDIV2_RESET
+    } clk_div2_state;
+    clk_div2_state clk_div2_state;
+
+    logic [511:0] read_buffer;
+    logic [DATA_LEN-1:0] result_buffer;
+
+    // State Machine @ clk domain
     always_ff @(posedge clk) begin
         if(reset) begin
             fiu.c0Rx.valid <= 1'b0;
@@ -151,7 +163,7 @@ module app_afu(
 
                 input_addr <= byteAddrToClAddr(csrs.cpu_wr_csrs[1].data);
             end else if((clk_state == CLK_WAITING_OUTPUT) && is_output_buf_written) begin
-                $display("CLK:  Read output buffer address");
+                $display("CLK: Read output buffer address");
                 state <= CLK_IDLE;
 
                 output_addr <= byteAddrToClAddr(csrs.cpu_wr_csrs[2].data);
@@ -209,19 +221,6 @@ module app_afu(
     end
 
     // State Machine @ clk_div2 domain
-    typedef enum logic [4:0] {
-        CLKDIV2_IDLE,
-
-        CLKDIV2_OP,
-        CLKDIV2_WAIT,
-        CLKDIV2_RESULT,
-
-        CLKDIV2_RESET
-    } clk_div2_state;
-    clk_div2_state clk_div2_state;
-
-    logic [DATA_LEN-1:0] result_buffer;
-
     always_ff @(posedge clk_div2) begin
         if(reset) begin
             clk_div2_state <= CLKDIV2_IDLE;
