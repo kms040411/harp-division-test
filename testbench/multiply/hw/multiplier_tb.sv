@@ -156,7 +156,7 @@ module app_afu(
             fiu.c1Tx.valid <= 1'b0;
 
             read_buffer <= {512{1'b0}};
-            read_buffer_valid <= 1'b0
+            read_buffer_valid <= 1'b0;
 
             clk_state <= CLK_WAITING_INPUT;
         end else begin
@@ -219,7 +219,7 @@ module app_afu(
                 fiu.c0Tx.valid <= 1'b0;
                 fiu.c1Tx.valid <= 1'b0;
                 read_buffer <= {512{1'b0}};
-
+                clk_state <= CLK_IDLE;
             end
         end
     end
@@ -233,7 +233,7 @@ module app_afu(
             result_buffer_valid <= 1'b0;
         end else begin
             if(clk_div2_state == CLKDIV2_IDLE) begin
-                if(result_buffer_valid == 1'b1) begin
+                if(read_buffer_valid == 1'b1) begin
                     clk_div2_state <= CLKDIV2_OP;
                 end else if(clk_state == CLK_RESET) begin
                     clk_div2_state <= CLKDIV2_RESET;
@@ -249,9 +249,8 @@ module app_afu(
             end else if(clk_div2_state == CLKDIV2_WAIT) begin
                 $display("CLKDIV2: Wait for 1 cycle");
                 clk_div2_state <= CLKDIV2_RESULT;
-
             end else if(clk_div2_state == CLKDIV2_RESULT) begin
-                $display("CLKDIV2: Operation done with result(%d)", d_result;
+                $display("CLKDIV2: Operation done with result(%d)", d_result);
                 clk_div2_state <= CLKDIV2_IDLE;
 
                 d_a <= {DATA_LEN{1'b0}};
