@@ -244,7 +244,9 @@ module app_afu(
 
             end else if(clk_div2_state == CLKDIV2_RESULT) begin
                 $display("CLKDIV2: Operation done with result(%d)", d_result);
-                clk_div2_state <= CLKDIV2_IDLE;
+                if(clk_state == CLK_RESPONSE) begin
+                    clk_div2_state <= CLKDIV2_IDLE;
+                end
 
                 d_a <= {DATA_LEN{1'b0}};
                 d_b <= {DATA_LEN{1'b0}};
