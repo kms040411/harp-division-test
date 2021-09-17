@@ -210,6 +210,7 @@ module app_afu(
             end else if(clk_state == CLK_RESPONSE) begin
                 $display("CLK: Send output buffer write request with result(%d)", result_buffer[DATA_LEN-1:0]);
                 clk_state <= CLK_IDLE;
+                read_buffer_valid <= 1'b0;
 
                 fiu.c1Tx.valid <= 1'b1;
                 fiu.c1Tx.hdr <= output_buffer_write_hdr;
