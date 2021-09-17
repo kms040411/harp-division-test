@@ -57,10 +57,10 @@ module multiplier
         end
     end*/
 
-    reg [DATA_LEN+MEM_DATA_LEN-1:0] mult_out;
+    reg [DATA_LEN-1:0] mult_out;
     always_ff @(posedge clk) begin
         if(reset) begin
-            mult_out <= {DATA_LEN+MEM_DATA_LEN-1{1'b0}};
+            mult_out <= {DATA_LEN{1'b0}};
         end else begin
             mult_out <= input1 * input2;
         end
