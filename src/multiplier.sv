@@ -35,7 +35,7 @@ module multiplier
         .sum({DATA_LEN{1'b0}}),
         .result(immMult)
     );*/
-    reg [DATA_LEN-1:0] mult_out;
+    /*reg [DATA_LEN-1:0] mult_out;
     reg [DATA_LEN-1:0] mult_out_q;
     always_ff @(posedge clk) begin
         if(reset) begin
@@ -55,8 +55,17 @@ module multiplier
         end else begin
             result_out <= mult_out_q;
         end
+    end*/
+
+    reg [DATA_LEN+MEM_DATA_LEN-1:0] mult_out;
+    always_ff @(posedge clk) begin
+        if(reset) begin
+            mult_out <= {DATA_LEN+MEM_DATA_LEN-1{1'b0}};
+        end else begin
+            mult_out <= input1 * input2;
+        end
     end
 
-    assign result = result_out;
+    assign result = mult_out[DATA_LEN-1:0];
 
 endmodule

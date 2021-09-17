@@ -227,7 +227,6 @@ module app_afu(
             result_buffer <= {DATA_LEN{1'b0}};
         end else begin
             if(clk_div2_state == CLKDIV2_IDLE) begin
-                $display("CLKDIV2: Wait until CLK proceeds");
                 if(clk_state == CLK_WAIT) begin
                     clk_div2_state <= CLKDIV2_OP;
                 end else if(clk_state == CLK_RESET) begin
@@ -243,12 +242,12 @@ module app_afu(
                 $display("CLKDIV2: Wait for 1 cycle");
                 clk_div2_state <= CLKDIV2_RESULT;
 
-                d_a <= {DATA_LEN{1'b0}};
-                d_b <= {DATA_LEN{1'b0}};
             end else if(clk_div2_state == CLKDIV2_RESULT) begin
                 $display("CLKDIV2: Operation done with result(%d)", d_result);
                 clk_div2_state <= CLKDIV2_IDLE;
 
+                d_a <= {DATA_LEN{1'b0}};
+                d_b <= {DATA_LEN{1'b0}};
                 result_buffer <= d_result;
             end else if(clk_div2_state == CLKDIV2_RESET) begin
                 $display("CLKDIV2: Got reset signal");
