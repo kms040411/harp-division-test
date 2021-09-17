@@ -203,6 +203,7 @@ module app_afu(
                 end
             end else if(clk_state == CLK_WAIT) begin
                 $display("CLK: Wait until CLK_DIV2 proceeds");
+                read_buffer_valid <= 1'b1;
                 if(result_buffer_valid == 1'b1) begin
                     clk_state <= CLK_RESPONSE;
                 end
