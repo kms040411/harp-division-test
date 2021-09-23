@@ -7,14 +7,14 @@ module async_fifo
         input reset,
 
         input wclk,
-        input [DATA_LEN-1:0] data_in,
+        input reg [DATA_LEN-1:0] data_in,
         input wrt_en,
-        output wrt_full,
+        output reg wrt_full,
 
         input rclk,
-        output [DATA_LEN-1:0] data_out,
+        output reg [DATA_LEN-1:0] data_out,
         input rd_en,
-        output rd_empty
+        output reg rd_empty
     );
     // Reference: http://www.asic-world.com/examples/verilog/asyn_fifo.html
 
