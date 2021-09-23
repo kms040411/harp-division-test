@@ -212,6 +212,7 @@ module app_afu(
         .rd_empty(clkdiv2_reset_empty)
     );
 
+    integer clk_wait;
     always_ff @(posedge clk) begin
         if(reset) begin
             fiu.c0Tx.valid <= 1'b0;
@@ -225,7 +226,9 @@ module app_afu(
             clk_reset_signal <= 1'b0;
 
             clk_state <= CLK_WAITING_INPUT;
+
             clk_state2 <= CLK2_READY;
+            clk_wait <= 5;
         end else begin
             if((clk_state == CLK_WAITING_INPUT) && is_input_buf_written) begin
                 $display("CLK: Read input buffer address");
@@ -283,7 +286,11 @@ module app_afu(
             end
 
             if(clk_state2 == CLK2_READY) begin
-                clk_state2 <= CLK2_POLLING;
+                if(clk_wait == 0) begin
+                    clk_state2 <= CLK2_POLLING;
+                end else begin
+                    clk_wait <= clk_wait - 1;
+                end
             end else if(clk_state2 == CLK2_POLLING) begin
                 fiu.c1Tx.valid <= 1'b0;
                 if(!clkdiv2_to_clk_empty) begin
@@ -305,6 +312,7 @@ module app_afu(
         end
     end
 
+    integer clkdiv2_wait;
     always_ff @(posedge clk_div2) begin
         if(reset) begin
             d_a <= {DATA_LEN{1'b0}};
@@ -314,10 +322,16 @@ module app_afu(
             clkdiv2_wrt_en <= 1'b0;
             clkdiv2_result <= {DATA_LEN{1'b0}};
 
+            clkdiv2_wait <= 5;
+
             clk_div2_state <= CLKDIV2_READY;
         end else begin
             if(clk_div2_state == CLKDIV2_READY) begin
-                clk_div2_state <= CLKDIV2_POLLING;
+                if(clkdiv2_wait == 0) begin
+                    clk_div2_state <= CLKDIV2_POLLING;
+                end else begin
+                    clkdiv2_wait <= clkdiv2_wait - 1;
+                end
             end else if(clk_div2_state == CLKDIV2_POLLING) begin
                 clkdiv2_wrt_en <= 1'b0;
                 clkdiv2_result <= {DATA_LEN{1'b0}};
