@@ -82,7 +82,7 @@ module app_afu(
 
     typedef enum logic [4:0] {
         CLK2_POLLING,
-        CLK2_RESPONSE,
+        CLK2_RESPONSE
     } _clk_state2;
     _clk_state2 clk_state2;
 

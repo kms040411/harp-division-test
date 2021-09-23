@@ -2,7 +2,7 @@ module async_fifo
     #(
         parameter DATA_LEN = 16,
         parameter ADDR_LEN = 4,
-        parameter FIFO_DEPTH = 1 << ADDR_LEN;
+        parameter FIFO_DEPTH = 1 << ADDR_LEN
     )(
         input reset,
 
