@@ -5,3 +5,5 @@ C:../../../src/sources.txt
 
 +incdir+.
 multiplier_tb.sv
+async_fifo.sv
+gray_counter.sv

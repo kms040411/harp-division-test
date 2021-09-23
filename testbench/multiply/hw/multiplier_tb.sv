@@ -75,16 +75,19 @@ module app_afu(
 
         CLK_REQUEST,
         CLK_REQUEST_FILL_BUF,
-        CLK_WAIT,
-        CLK_RESPONSE,
 
         CLK_RESET
     } _clk_state;
     _clk_state clk_state;
 
     typedef enum logic [4:0] {
-        CLKDIV2_IDLE,
+        CLK2_POLLING,
+        CLK2_RESPONSE,
+    } _clk_state2;
+    _clk_state2 clk_state2;
 
+    typedef enum logic [4:0] {
+        CLKDIV2_POLLING,
         CLKDIV2_OP,
         CLKDIV2_WAIT,
         CLKDIV2_RESULT,
@@ -144,21 +147,83 @@ module app_afu(
         .result(d_result)
     );
 
-    logic [511:0] read_buffer;
-    logic read_buffer_valid;
-    logic [DATA_LEN-1:0] result_buffer;
-    logic result_buffer_valid;
+    logic [DATA_LEN*2-1:0] clk_operand;         // Input
+    logic [DATA_LEN*2-1:0] clkdiv2_operand;     // Output
+    logic clk_to_clkdiv2_empty;                 // Output
+    logic clk_to_clkdiv2_full;                  // Output
+    logic clk_wrt_en;                           // Input
+    logic clkdiv2_rd_en;                        // Input
 
-    // State Machine @ clk domain
+    async_fifo #(
+        .DATA_LEN(DATA_LEN * 2)
+    ) clk_to_clkdiv2 (
+        .reset(reset),
+        .wclk(clk),
+        .data_in(clk_operand),
+        .wrt_en(clk_wrt_en),
+        .wrt_full(clk_to_clkdiv2_full),
+        .rclk(clk_div2),
+        .data_out(clkdiv2_operand),
+        .rd_en(clkdiv2_rd_en),
+        .rd_empty(clk_to_clkdiv2_empty)
+    );
+
+    logic [DATA_LEN-1:0] clk_result;            // Output
+    logic [DATA_LEN-1:0] clkdiv2_result;        // Input
+    logic clkdiv2_to_clk_empty;                 // Output
+    logic clkdiv2_to_clk_full;                  // Output
+    logic clkdiv2_wrt_en;                       // Input
+    logic clk_rd_en;                            // Input
+
+    async_fifo #(
+        .DATA_LEN(DATA_LEN)
+    ) clkdiv2_to_clk (
+        .reset(reset),
+        .wclk(clk_div2),
+        .data_in(clkdiv2_result),
+        .wrt_en(clkdiv2_wrt_en),
+        .wrt_full(clkdiv2_to_clk_full),
+        .rclk(clk),
+        .data_out(clk_result),
+        .rd_en(clk_rd_en),
+        .rd_empty(clkdiv2_to_clk_empty)
+    );
+
+    logic clk_reset_signal;
+    logic clkdiv2_reset_signal;
+    logic clk_reset_en;
+    logic clkdiv2_reset_en;
+    logic clk_reset_full;
+    logic clkdiv2_reset_empty;
+
+    async_fifo #(
+        .DATA_LEN(1)
+    ) signal_clk_to_clkdiv2 (
+        .reset(reset),
+        .wclk(clk),
+        .data_in(clk_reset_signal),
+        .wrt_en(clk_reset_en),
+        .wrt_full(clk_reset_full),
+        .rclk(clk_div2),
+        .data_out(clkdiv2_reset_signal),
+        .rd_en(clkdiv2_reset_en),
+        .rd_empty(clkdiv2_reset_empty)
+    );
+
     always_ff @(posedge clk) begin
         if(reset) begin
             fiu.c0Tx.valid <= 1'b0;
             fiu.c1Tx.valid <= 1'b0;
 
-            read_buffer <= {512{1'b0}};
-            read_buffer_valid <= 1'b0;
+            clk_rd_en <= 1'b0;
+            clk_wrt_en <= 1'b0;
+            clk_operand <= {DATA_LEN*2{1'b0}};
+
+            clk_reset_en <= 1'b0;
+            clk_reset_signal <= 1'b0;
 
             clk_state <= CLK_WAITING_INPUT;
+            clk_state2 <= CLK2_POLLING;
         end else begin
             if((clk_state == CLK_WAITING_INPUT) && is_input_buf_written) begin
                 $display("CLK: Read input buffer address");
@@ -172,10 +237,12 @@ module app_afu(
                 output_addr <= byteAddrToClAddr(csrs.cpu_wr_csrs[2].data);
             end else if(clk_state == CLK_IDLE) begin
                 fiu.c0Tx.valid <= 1'b0;
-                fiu.c1Tx.valid <= 1'b0;
 
-                read_buffer <= {512{1'b0}};
-                read_buffer_valid <= 1'b0;
+                clk_wrt_en <= 1'b0;
+                clk_operand <= {DATA_LEN*2{1'b0}};
+
+                clk_reset_en <= 1'b0;
+                clk_reset_signal <= 1'b0;
 
                 if(is_fn_written) begin
                     $display("CLK: Got start signal, send it to divider");
@@ -196,78 +263,98 @@ module app_afu(
                 fiu.c0Tx.valid <= 1'b0;
                 if(cci_c0Rx_isReadRsp(fiu.c0Rx)) begin
                     $display("CLK: Got two number a(%d), b(%d)", fiu.c0Rx.data[0+:DATA_LEN], fiu.c0Rx.data[DATA_LEN+:DATA_LEN]);
-                    clk_state <= CLK_WAIT;
+                    clk_state <= CLK_IDLE;
 
-                    read_buffer <= fiu.c0Rx.data[511:0];
-                    read_buffer_valid <= 1'b1;
+                    clk_operand <= fiu.c0Rx.data[0+:DATA_LEN*2];
+                    clk_wrt_en <= 1'b1;
                 end
-            end else if(clk_state == CLK_WAIT) begin
-                $display("CLK: Wait until CLK_DIV2 proceeds");
-                read_buffer_valid <= 1'b1;
-                if(result_buffer_valid == 1'b1) begin
-                    clk_state <= CLK_RESPONSE;
-                end
-            end else if(clk_state == CLK_RESPONSE) begin
-                $display("CLK: Send output buffer write request with result(%d)", result_buffer[DATA_LEN-1:0]);
+            end else if(clk_state == CLK_RESET) begin
+                $display("CLK: Got reset signal, wait for synchronizing with CLKDIV2");
                 clk_state <= CLK_IDLE;
 
-                read_buffer_valid <= 1'b0;
-                read_buffer <= {512{1'b0}};
+                fiu.c0Tx.valid <= 1'b0;
+                clk_wrt_en <= 1'b0;
+                clk_operand <= {DATA_LEN*2{1'b0}};
+
+                clk_reset_en <= 1'b1;
+                clk_reset_signal <= 1'b1;
+            end
+
+            if(clk_state2 == CLK2_POLLING) begin
+                fiu.c1Tx.valid <= 1'b0;
+                if(!clkdiv2_to_clk_empty) begin
+                    $display("CLK: FIFO has data, read it");
+                    clk_state2 <= CLK2_RESPONSE;
+
+                    clk_rd_en <= 1'b1;
+                end
+            end else if(clk_state2 == CLK2_RESPONSE) begin
+                $display("CLK: Got a number result(%d)", clk_result);
+                clk_state2 <= CLK2_POLLING;
+
+                clk_rd_en <= 1'b0;
 
                 fiu.c1Tx.valid <= 1'b1;
                 fiu.c1Tx.hdr <= output_buffer_write_hdr;
-                fiu.c1Tx.data <= t_ccip_clData'({448'b0, result_buffer[DATA_LEN-1:0], 32'b1});
-            end else if(clk_state == CLK_RESET) begin
-                $display("CLK: Got reset signal, wait for synchronizing with CLKDIV2");
-
-                fiu.c0Tx.valid <= 1'b0;
-                fiu.c1Tx.valid <= 1'b0;
-                read_buffer <= {512{1'b0}};
-                clk_state <= CLK_IDLE;
+                fiu.c1Tx.data <= t_ccip_clData'({448'b0, clk_result[DATA_LEN-1:0], 32'b1});
             end
         end
     end
 
-    // State Machine @ clk_div2 domain
     always_ff @(posedge clk_div2) begin
         if(reset) begin
-            clk_div2_state <= CLKDIV2_IDLE;
+            d_a <= {DATA_LEN{1'b0}};
+            d_b <= {DATA_LEN{1'b0}};
 
-            result_buffer <= {DATA_LEN{1'b0}};
-            result_buffer_valid <= 1'b0;
+            clkdiv2_rd_en <= 1'b0;
+            clkdiv2_wrt_en <= 1'b0;
+            clkdiv2_result <= {DATA_LEN{1'b0}};
+
+            clk_div2_state <= CLKDIV2_POLLING;
         end else begin
-            if(clk_div2_state == CLKDIV2_IDLE) begin
-                if(read_buffer_valid == 1'b1) begin
+            if(clk_div2_state == CLKDIV2_POLLING) begin
+                clkdiv2_wrt_en <= 1'b0;
+                clkdiv2_result <= {DATA_LEN{1'b0}};
+
+                if(!clk_to_clkdiv2_empty) begin
+                    $display("CLKDIV2: FIFO has data, read it");
                     clk_div2_state <= CLKDIV2_OP;
-                end else if(clk_state == CLK_RESET) begin
+
+                    clkdiv2_rd_en <= 1'b1;
+                end else if(!clkdiv2_reset_empty) begin
+                    $display("CLKDIV2: Got reset signal");
                     clk_div2_state <= CLKDIV2_RESET;
+
+                    clkdiv2_reset_en <= 1'b1;
                 end
             end else if(clk_div2_state == CLKDIV2_OP) begin
-                $display("CLKDIV2: Read the buffer with a(%d), b(%d)", read_buffer[0+:DATA_LEN], read_buffer[DATA_LEN+:DATA_LEN]);
+                $display("CLKDIV2: Got two operands a(%d), b(%d)", clkdiv2_operand[0+:DATA_LEN], clkdiv2_operand[DATA_LEN+:DATA_LEN]);
                 clk_div2_state <= CLKDIV2_WAIT;
 
-                result_buffer_valid <= 1'b0;
-                result_buffer <= {DATA_LEN{1'b0}};
+                clkdiv2_rd_en <= 1'b0;
 
-                d_a <= read_buffer[0+:DATA_LEN];
-                d_b <= read_buffer[DATA_LEN+:DATA_LEN];
+                d_a <= clkdiv2_operand[0+:DATA_LEN];
+                d_b <= clkdiv2_operand[DATA_LEN+:DATA_LEN];
             end else if(clk_div2_state == CLKDIV2_WAIT) begin
                 $display("CLKDIV2: Wait for 1 cycle");
                 clk_div2_state <= CLKDIV2_RESULT;
-            end else if(clk_div2_state == CLKDIV2_RESULT) begin
-                $display("CLKDIV2: Operation done with result(%d)", d_result);
-                clk_div2_state <= CLKDIV2_IDLE;
 
                 d_a <= {DATA_LEN{1'b0}};
                 d_b <= {DATA_LEN{1'b0}};
+            end else if(clk_div2_state == CLKDIV2_RESULT) begin
+                $display("CLKDIV2: Operation done with result(%d)", d_result);
+                clk_div2_state <= CLKDIV2_POLLING;
 
-                result_buffer <= d_result;
-                result_buffer_valid <= 1'b1;
+                clkdiv2_wrt_en <= 1'b1;
+                clkdiv2_result <= d_result;
             end else if(clk_div2_state == CLKDIV2_RESET) begin
-                $display("CLKDIV2: Got reset signal");
-                clk_div2_state <= CLKDIV2_IDLE;
+                $display("CLKDIV2: Reset");
+                clk_div2_state <= CLKDIV2_POLLING;
 
-                result_buffer <= {DATA_LEN{1'b0}};
+                clkdiv2_reset_en <= 1'b0;
+
+                d_a <= {DATA_LEN{1'b0}};
+                d_b <= {DATA_LEN{1'b0}};
             end
         end
     end
