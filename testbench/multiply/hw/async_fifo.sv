@@ -18,7 +18,7 @@ module async_fifo
     );
     // Reference: http://www.asic-world.com/examples/verilog/asyn_fifo.html
 
-    reg [DATA_WIDTH-1:0] mem [FIFO_DEPTH-1:0];
+    reg [DATA_LEN-1:0] mem [FIFO_DEPTH-1:0];
     wire [ADDR_LEN-1:0] pNextWordToWrite;   // Write Pointer
     wire [ADDR_LEN-1:0] pNextWordToRead;    // Read Pointer
     wire EqualAddresses;
@@ -65,10 +65,10 @@ module async_fifo
 
     assign EqualAddresses = (pNextWordToRead == pNextWordToWrite);
 
-    assign Set_Status = (pNextWordToWrite[ADDRESS_WIDTH-2] ~^ pNextWordToRead[ADDRESS_WIDTH-1]) &
-                         (pNextWordToWrite[ADDRESS_WIDTH-1] ^  pNextWordToRead[ADDRESS_WIDTH-2]);
-    assign Rst_Status = (pNextWordToWrite[ADDRESS_WIDTH-2] ^  pNextWordToRead[ADDRESS_WIDTH-1]) &
-                         (pNextWordToWrite[ADDRESS_WIDTH-1] ~^ pNextWordToRead[ADDRESS_WIDTH-2]);
+    assign Set_Status = (pNextWordToWrite[ADDRESS_LEN-2] ~^ pNextWordToRead[ADDRESS_LEN-1]) &
+                         (pNextWordToWrite[ADDRESS_LEN-1] ^  pNextWordToRead[ADDRESS_LEN-2]);
+    assign Rst_Status = (pNextWordToWrite[ADDRESS_LEN-2] ^  pNextWordToRead[ADDRESS_LEN-1]) &
+                         (pNextWordToWrite[ADDRESS_LEN-1] ~^ pNextWordToRead[ADDRESS_LEN-2]);
 
     always @(Set_Status, Rst_Status, reset) begin
         if (Rst_Status | reset) begin

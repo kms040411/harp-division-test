@@ -6,7 +6,7 @@ module gray_counter
         input reset,
         input en,
 
-        output [ADDR_LEN-1:0] out  // gray code counter
+        output reg [ADDR_LEN-1:0] out  // gray code counter
     );
     // Reference: http://www.asic-world.com/examples/verilog/asyn_fifo.html
 
