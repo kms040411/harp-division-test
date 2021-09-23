@@ -65,10 +65,10 @@ module async_fifo
 
     assign EqualAddresses = (pNextWordToRead == pNextWordToWrite);
 
-    assign Set_Status = (pNextWordToWrite[ADDRESS_LEN-2] ~^ pNextWordToRead[ADDRESS_LEN-1]) &
-                         (pNextWordToWrite[ADDRESS_LEN-1] ^  pNextWordToRead[ADDRESS_LEN-2]);
-    assign Rst_Status = (pNextWordToWrite[ADDRESS_LEN-2] ^  pNextWordToRead[ADDRESS_LEN-1]) &
-                         (pNextWordToWrite[ADDRESS_LEN-1] ~^ pNextWordToRead[ADDRESS_LEN-2]);
+    assign Set_Status = (pNextWordToWrite[ADDR_LEN-2] ~^ pNextWordToRead[ADDR_LEN-1]) &
+                         (pNextWordToWrite[ADDR_LEN-1] ^  pNextWordToRead[ADDR_LEN-2]);
+    assign Rst_Status = (pNextWordToWrite[ADDR_LEN-2] ^  pNextWordToRead[ADDR_LEN-1]) &
+                         (pNextWordToWrite[ADDR_LEN-1] ~^ pNextWordToRead[ADDR_LEN-2]);
 
     always @(Set_Status, Rst_Status, reset) begin
         if (Rst_Status | reset) begin
