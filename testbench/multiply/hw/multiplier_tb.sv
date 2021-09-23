@@ -213,7 +213,7 @@ module app_afu(
     );
 
     integer clk_wait;
-    always_ff @(posedge clk) begin
+    always_ff @(posedge clk or posedge reset) begin
         if(reset) begin
             fiu.c0Tx.valid <= 1'b0;
             fiu.c1Tx.valid <= 1'b0;
@@ -313,7 +313,7 @@ module app_afu(
     end
 
     integer clkdiv2_wait;
-    always_ff @(posedge clk_div2) begin
+    always_ff @(posedge clk_div2 or posedge reset) begin
         if(reset) begin
             d_a <= {DATA_LEN{1'b0}};
             d_b <= {DATA_LEN{1'b0}};
