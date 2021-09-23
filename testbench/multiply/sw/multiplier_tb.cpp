@@ -81,7 +81,7 @@ int main(int argc, char **argv){
         assert_test(1, a * b, output_buf[1]);
         printf("%d * %d == %d\n", a, b, output_buf[1]);
 
-        csrs.writeCSR(3, 1);
+        //csrs.writeCSR(3, 1);
     }
 
 
