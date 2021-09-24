@@ -285,17 +285,17 @@ module app_afu(
 
             if(clk_state2 == CLK2_POLLING) begin
                 fiu.c1Tx.valid <= 1'b0;
-                clk_rd_en <= 1'b0;
-                
                 if(!clkdiv2_to_clk_empty) begin
                     $display("CLK: FIFO has data, read it");
                     clk_state2 <= CLK2_RESPONSE;
+
+                    clk_rd_en <= 1'b1;
                 end
             end else if(clk_state2 == CLK2_RESPONSE) begin
                 $display("CLK: Got a number result(%d)", clk_result);
                 clk_state2 <= CLK2_POLLING;
 
-                clk_rd_en <= 1'b1;
+                clk_rd_en <= 1'b0;
 
                 fiu.c1Tx.valid <= 1'b1;
                 fiu.c1Tx.hdr <= output_buffer_write_hdr;
@@ -325,6 +325,8 @@ module app_afu(
                 if(!clk_to_clkdiv2_empty) begin
                     $display("CLKDIV2: FIFO has data, read it");
                     clk_div2_state <= CLKDIV2_OP;
+
+                    clkdiv2_rd_en <= 1'b1;
                 end else if(!clkdiv2_reset_empty) begin
                     $display("CLKDIV2: Got reset signal");
                     clk_div2_state <= CLKDIV2_RESET;
@@ -335,15 +337,13 @@ module app_afu(
                 $display("CLKDIV2: Got two operands a(%d), b(%d)", clkdiv2_operand[0+:DATA_LEN], clkdiv2_operand[DATA_LEN+:DATA_LEN]);
                 clk_div2_state <= CLKDIV2_WAIT;
 
-                clkdiv2_rd_en <= 1'b1;
+                clkdiv2_rd_en <= 1'b0;
 
                 d_a <= clkdiv2_operand[0+:DATA_LEN];
                 d_b <= clkdiv2_operand[DATA_LEN+:DATA_LEN];
             end else if(clk_div2_state == CLKDIV2_WAIT) begin
                 $display("CLKDIV2: Wait for 1 cycle");
                 clk_div2_state <= CLKDIV2_RESULT;
-
-                clkdiv2_rd_en <= 1'b0;
 
                 d_a <= {DATA_LEN{1'b0}};
                 d_b <= {DATA_LEN{1'b0}};
@@ -362,6 +362,7 @@ module app_afu(
                 d_a <= {DATA_LEN{1'b0}};
                 d_b <= {DATA_LEN{1'b0}};
             end
+            $display("a(%d), b(%d)", clkdiv2_operand[0+:DATA_LEN], clkdiv2_operand[DATA_LEN+:DATA_LEN]);
         end
     end
 
