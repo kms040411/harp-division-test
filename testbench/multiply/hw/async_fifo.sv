@@ -7,7 +7,60 @@ module async_fifo
         input reset,
 
         input wclk,
-        input reg [DATA_LEN-1:0] data_in,
+        input [DATA_LEN-1:0] data_in,
+        input wrt_en,
+        output wrt_full,
+
+        input rclk,
+        output [DATA_LEN-1:0] data_out,
+        input rd_en,
+        output rd_empty
+    );
+
+    dcfifo #(
+        .lpm_width(DATA_LEN),
+        .lpm_widthu(ADDR_LEN),
+        .lpm_numwords(FIFO_DEPTH),
+        .lpm_showahead("OFF"),
+        .lpm_type("dcfifo"),
+        .lpm_hint("RAM_BLOCK_TYPE=M20K,MAXIMUM_DEPTH=32,DISABLE_EMBEDDED_TIMING_CONSTRAINT=TRUE"),
+        .rdsync_delaypipe(3),
+        .wrsync_delaypipe(3),
+        .read_aclr_sync("ON"),
+        .write_aclr_sync("ON"),
+        .enable_ecc("FALSE")
+    ) dcfifo_unit (
+        .aclr(reset),
+
+        .wrclk(wclk),
+        .wrreq(wrt_en),
+        .data(data_in),
+        .wrfull(wrt_full),
+        .wrempty(),
+        .wrusedw(),
+
+        .rdclk(rdclk),
+        .rdreq(rd_en),
+        .q(data_out)
+        .rdempty(rd_empty),
+        .rdfull(),
+        .rdusedw(),
+
+        .eccstatus()
+    );
+
+endmodule
+
+/*module async_fifo
+    #(
+        parameter DATA_LEN = 16,
+        parameter ADDR_LEN = 4,
+        parameter FIFO_DEPTH = 1 << ADDR_LEN
+    )(
+        input reset,
+
+        input wclk,
+        input [DATA_LEN-1:0] data_in,
         input wrt_en,
         output reg wrt_full,
 
@@ -96,7 +149,7 @@ module async_fifo
 
     always_ff @(posedge rclk or posedge PresetEmpty) begin
         if(reset) begin
-            rd_empty <= 1'b0;
+            rd_empty <= 1'b1;
         end else begin
             if(PresetEmpty) begin
                 rd_empty <= 1'b1;
@@ -106,4 +159,4 @@ module async_fifo
         end
     end
 
-endmodule
+endmodule*/
