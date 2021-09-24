@@ -24,8 +24,8 @@ module async_fifo
         .lpm_showahead("OFF"),
         .lpm_type("dcfifo"),
         .lpm_hint("RAM_BLOCK_TYPE=M20K,MAXIMUM_DEPTH=32,DISABLE_EMBEDDED_TIMING_CONSTRAINT=TRUE"),
-        .rdsync_delaypipe(3),
-        .wrsync_delaypipe(3),
+        .rdsync_delaypipe(0),
+        .wrsync_delaypipe(0),
         .read_aclr_synch("ON"),
         .write_aclr_synch("ON"),
         .enable_ecc("FALSE")
