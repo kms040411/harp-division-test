@@ -26,8 +26,8 @@ module async_fifo
         .lpm_hint("RAM_BLOCK_TYPE=M20K,MAXIMUM_DEPTH=32,DISABLE_EMBEDDED_TIMING_CONSTRAINT=TRUE"),
         .rdsync_delaypipe(3),
         .wrsync_delaypipe(3),
-        .read_aclr_sync("ON"),
-        .write_aclr_sync("ON"),
+        .read_aclr_synch("ON"),
+        .write_aclr_synch("ON"),
         .enable_ecc("FALSE")
     ) dcfifo_unit (
         .aclr(reset),
@@ -41,7 +41,7 @@ module async_fifo
 
         .rdclk(rdclk),
         .rdreq(rd_en),
-        .q(data_out)
+        .q(data_out),
         .rdempty(rd_empty),
         .rdfull(),
         .rdusedw(),
