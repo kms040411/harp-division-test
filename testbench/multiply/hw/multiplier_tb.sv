@@ -88,6 +88,7 @@ module app_afu(
 
     typedef enum logic [4:0] {
         CLKDIV2_POLLING,
+        CLKDIV2_READ_WAIT,
         CLKDIV2_OP,
         CLKDIV2_WAIT,
         CLKDIV2_RESULT,
@@ -210,7 +211,6 @@ module app_afu(
         .rd_empty(clkdiv2_reset_empty)
     );
 
-    integer clk_wait;
     always_ff @(posedge clk or posedge reset) begin
         if(reset) begin
             fiu.c0Tx.valid <= 1'b0;
@@ -226,7 +226,6 @@ module app_afu(
             clk_state <= CLK_WAITING_INPUT;
 
             clk_state2 <= CLK2_POLLING;
-            clk_wait <= 5;
         end else begin
             if((clk_state == CLK_WAITING_INPUT) && is_input_buf_written) begin
                 $display("CLK: Read input buffer address");
@@ -304,7 +303,6 @@ module app_afu(
         end
     end
 
-    integer clkdiv2_wait;
     always_ff @(posedge clk_div2 or posedge reset) begin
         if(reset) begin
             d_a <= {DATA_LEN{1'b0}};
@@ -314,8 +312,6 @@ module app_afu(
             clkdiv2_wrt_en <= 1'b0;
             clkdiv2_result <= {DATA_LEN{1'b0}};
 
-            clkdiv2_wait <= 5;
-
             clk_div2_state <= CLKDIV2_POLLING;
         end else begin
             if(clk_div2_state == CLKDIV2_POLLING) begin
@@ -324,7 +320,7 @@ module app_afu(
 
                 if(!clk_to_clkdiv2_empty) begin
                     $display("CLKDIV2: FIFO has data, read it");
-                    clk_div2_state <= CLKDIV2_OP;
+                    clk_div2_state <= CLKDIV2_READ_WAIT;
 
                     clkdiv2_rd_en <= 1'b1;
                 end else if(!clkdiv2_reset_empty) begin
@@ -333,6 +329,8 @@ module app_afu(
 
                     clkdiv2_reset_en <= 1'b1;
                 end
+            end else if(clk_div2_state == CLKDIV2_READ_WAIT) begin
+                clk_div2_state <= CLKDIV2_OP;
             end else if(clk_div2_state == CLKDIV2_OP) begin
                 $display("CLKDIV2: Got two operands a(%d), b(%d)", clkdiv2_operand[0+:DATA_LEN], clkdiv2_operand[DATA_LEN+:DATA_LEN]);
                 clk_div2_state <= CLKDIV2_WAIT;
