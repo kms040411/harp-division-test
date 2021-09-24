@@ -82,6 +82,7 @@ module app_afu(
 
     typedef enum logic [4:0] {
         CLK2_POLLING,
+        CLK2_READ_WAIT,
         CLK2_RESPONSE
     } _clk_state2;
     _clk_state2 clk_state2;
@@ -93,6 +94,7 @@ module app_afu(
         CLKDIV2_WAIT,
         CLKDIV2_RESULT,
 
+        CLKDIV2_RESET_WAIT,
         CLKDIV2_RESET
     } _clk_div2_state;
     _clk_div2_state clk_div2_state;
@@ -286,10 +288,12 @@ module app_afu(
                 fiu.c1Tx.valid <= 1'b0;
                 if(!clkdiv2_to_clk_empty) begin
                     $display("CLK: FIFO has data, read it");
-                    clk_state2 <= CLK2_RESPONSE;
+                    clk_state2 <= CLK2_READ_WAIT;
 
                     clk_rd_en <= 1'b1;
                 end
+            end else if(clk_state2 == CLK2_READ_WAIT) begin
+                clk_state2 <= CLK2_RESPONSE;
             end else if(clk_state2 == CLK2_RESPONSE) begin
                 $display("CLK: Got a number result(%d)", clk_result);
                 clk_state2 <= CLK2_POLLING;
@@ -325,7 +329,7 @@ module app_afu(
                     clkdiv2_rd_en <= 1'b1;
                 end else if(!clkdiv2_reset_empty) begin
                     $display("CLKDIV2: Got reset signal");
-                    clk_div2_state <= CLKDIV2_RESET;
+                    clk_div2_state <= CLKDIV2_RESET_WAIT;
 
                     clkdiv2_reset_en <= 1'b1;
                 end
@@ -351,6 +355,8 @@ module app_afu(
 
                 clkdiv2_wrt_en <= 1'b1;
                 clkdiv2_result <= d_result;
+            end else if(clk_div2_state == CLKDIV2_RESET_WAIT) begin
+                clk_div2_state <= CLKDIV2_RESET;
             end else if(clk_div2_state == CLKDIV2_RESET) begin
                 $display("CLKDIV2: Reset");
                 clk_div2_state <= CLKDIV2_POLLING;
@@ -360,7 +366,6 @@ module app_afu(
                 d_a <= {DATA_LEN{1'b0}};
                 d_b <= {DATA_LEN{1'b0}};
             end
-            $display("a(%d), b(%d)", clkdiv2_operand[0+:DATA_LEN], clkdiv2_operand[DATA_LEN+:DATA_LEN]);
         end
     end
 
