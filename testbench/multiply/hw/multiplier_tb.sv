@@ -81,14 +81,12 @@ module app_afu(
     _clk_state clk_state;
 
     typedef enum logic [4:0] {
-        CLK2_READY,
         CLK2_POLLING,
         CLK2_RESPONSE
     } _clk_state2;
     _clk_state2 clk_state2;
 
     typedef enum logic [4:0] {
-        CLKDIV2_READY,
         CLKDIV2_POLLING,
         CLKDIV2_OP,
         CLKDIV2_WAIT,
@@ -227,7 +225,7 @@ module app_afu(
 
             clk_state <= CLK_WAITING_INPUT;
 
-            clk_state2 <= CLK2_READY;
+            clk_state2 <= CLK2_POLLING;
             clk_wait <= 5;
         end else begin
             if((clk_state == CLK_WAITING_INPUT) && is_input_buf_written) begin
@@ -285,13 +283,7 @@ module app_afu(
                 clk_reset_signal <= 1'b1;
             end
 
-            if(clk_state2 == CLK2_READY) begin
-                if(clk_wait == 0) begin
-                    clk_state2 <= CLK2_POLLING;
-                end else begin
-                    clk_wait <= clk_wait - 1;
-                end
-            end else if(clk_state2 == CLK2_POLLING) begin
+            if(clk_state2 == CLK2_POLLING) begin
                 fiu.c1Tx.valid <= 1'b0;
                 if(!clkdiv2_to_clk_empty) begin
                     $display("CLK: FIFO has data, read it");
@@ -324,15 +316,9 @@ module app_afu(
 
             clkdiv2_wait <= 5;
 
-            clk_div2_state <= CLKDIV2_READY;
+            clk_div2_state <= CLKDIV2_POLLING;
         end else begin
-            if(clk_div2_state == CLKDIV2_READY) begin
-                if(clkdiv2_wait == 0) begin
-                    clk_div2_state <= CLKDIV2_POLLING;
-                end else begin
-                    clkdiv2_wait <= clkdiv2_wait - 1;
-                end
-            end else if(clk_div2_state == CLKDIV2_POLLING) begin
+            if(clk_div2_state == CLKDIV2_POLLING) begin
                 clkdiv2_wrt_en <= 1'b0;
                 clkdiv2_result <= {DATA_LEN{1'b0}};
 
