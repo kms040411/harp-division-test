@@ -39,7 +39,7 @@ module async_fifo
         .wrempty(),
         .wrusedw(),
 
-        .rdclk(rdclk),
+        .rdclk(rclk),
         .rdreq(rd_en),
         .q(data_out),
         .rdempty(rd_empty),

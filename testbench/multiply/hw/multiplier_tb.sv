@@ -321,7 +321,7 @@ module app_afu(
             if(clk_div2_state == CLKDIV2_POLLING) begin
                 clkdiv2_wrt_en <= 1'b0;
                 clkdiv2_result <= {DATA_LEN{1'b0}};
-
+                
                 if(!clk_to_clkdiv2_empty) begin
                     $display("CLKDIV2: FIFO has data, read it");
                     clk_div2_state <= CLKDIV2_OP;
