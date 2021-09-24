@@ -81,20 +81,28 @@ module async_fifo
     assign PresetFull = Status & EqualAddresses;
 
     always_ff @(posedge wclk or posedge PresetFull) begin
-        if(PresetFull) begin
-            wrt_full <= 1'b1;
-        end else begin
+        if(reset) begin
             wrt_full <= 1'b0;
+        end else begin
+            if(PresetFull) begin
+                wrt_full <= 1'b1;
+            end else begin
+                wrt_full <= 1'b0;
+            end
         end
     end
 
     assign PresetEmpty = ~Status & EqualAddresses;
 
     always_ff @(posedge rclk or posedge PresetEmpty) begin
-        if(PresetEmpty) begin
-            rd_empty <= 1'b1;
-        end else begin
+        if(reset) begin
             rd_empty <= 1'b0;
+        end else begin
+            if(PresetEmpty) begin
+                rd_empty <= 1'b1;
+            end else begin
+                rd_empty <= 1'b0;
+            end
         end
     end
 
